@@ -26,6 +26,7 @@ import {
 	markQueuedAttachmentsSubmitted,
 	reconcileQueuedAttachments,
 } from "./attachments";
+import { readDesktopSettings } from "./desktop-settings";
 import {
 	disposeDesktopFeatureFlagsService,
 	getDesktopFeatureFlagsService,
@@ -851,7 +852,9 @@ export function cancelSidecarMistakeQuestions(
 export function createSidecarRuntimeCapabilities(
 	ctx: SidecarContext,
 ): RuntimeCapabilities {
+	const { runCommandsTimeoutSeconds } = readDesktopSettings();
 	return {
+		runCommandsTimeoutMs: runCommandsTimeoutSeconds * 1000,
 		toolExecutors: {
 			askQuestion: (question, options, context) =>
 				requestSidecarAskQuestion(ctx, question, options, context),

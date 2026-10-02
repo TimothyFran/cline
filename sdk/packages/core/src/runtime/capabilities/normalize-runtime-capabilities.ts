@@ -7,6 +7,9 @@ export function normalizeRuntimeCapabilities(
 	let requestToolApproval:
 		| RuntimeCapabilities["requestToolApproval"]
 		| undefined;
+	let runCommandsTimeoutMs:
+		| RuntimeCapabilities["runCommandsTimeoutMs"]
+		| undefined;
 
 	for (const source of sources) {
 		if (!source) continue;
@@ -19,15 +22,23 @@ export function normalizeRuntimeCapabilities(
 		if (source.requestToolApproval) {
 			requestToolApproval = source.requestToolApproval;
 		}
+		if (source.runCommandsTimeoutMs !== undefined) {
+			runCommandsTimeoutMs = source.runCommandsTimeoutMs;
+		}
 	}
 
 	const hasToolExecutors =
 		toolExecutors && Object.keys(toolExecutors).length > 0;
-	if (!hasToolExecutors && !requestToolApproval) {
+	if (
+		!hasToolExecutors &&
+		!requestToolApproval &&
+		runCommandsTimeoutMs === undefined
+	) {
 		return undefined;
 	}
 	return {
 		...(hasToolExecutors ? { toolExecutors } : {}),
 		...(requestToolApproval ? { requestToolApproval } : {}),
+		...(runCommandsTimeoutMs !== undefined ? { runCommandsTimeoutMs } : {}),
 	};
 }

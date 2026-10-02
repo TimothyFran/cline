@@ -213,6 +213,7 @@ Supported commands:
 | `get_feature_flags` | `isCloudAgentsEnabled()` (env override + settings toggle) |
 | `get_desktop_settings` | `readDesktopSettings()` |
 | `set_cloud_sessions_enabled` | `setCloudSessionsEnabled()` + `feature_flags_changed` broadcast |
+| `set_run_commands_timeout` | `setRunCommandsTimeoutSeconds()` |
 | `list_cloud_repositories` | `CloudSessionManager.listRepositories()` (GitHub integration) |
 | `list_cloud_models` | `CloudSessionManager.listModels()` (account-scoped Usage-Billing, ClinePass, and ClineFree catalogs; model IDs use the Cline cloud transport) |
 | `list_cloud_branches` | `CloudSessionManager.listBranches()` (paginated) |

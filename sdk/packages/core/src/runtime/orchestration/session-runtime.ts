@@ -80,6 +80,12 @@ export interface RuntimeBuilderInput {
 	configExtensions?: RuntimeConfigExtensionKind[];
 	toolExecutors?: Partial<ToolExecutors>;
 	runCommandExecutionController?: RunCommandExecutionController;
+	/**
+	 * Timeout in milliseconds applied to the built-in `run_commands` tool.
+	 * Forwarded to the shell executor's process-kill timer and the tool-level
+	 * timeout. Unset keeps the SDK default (30000 ms).
+	 */
+	runCommandsTimeoutMs?: number;
 	toolPolicies?: CoreSessionConfig["toolPolicies"];
 	workspaceManager?: WorkspaceManager;
 	logger?: BasicLogger;

@@ -149,6 +149,7 @@ function createBuiltinToolsList(
 	executorOverrides?: Partial<ToolExecutors>,
 	telemetry?: ITelemetryService,
 	runCommandExecutionController?: RunCommandExecutionController,
+	runCommandsTimeoutMs?: number,
 ): AgentTool[] {
 	const preset = ToolPresets[resolveToolPresetName({ mode })];
 	const toolRoutingConfig = resolveToolRoutingConfig(
@@ -162,8 +163,12 @@ function createBuiltinToolsList(
 		createBuiltinTools({
 			cwd,
 			telemetry,
+			bashTimeoutMs: runCommandsTimeoutMs,
 			executorOptions: {
-				bash: { executionController: runCommandExecutionController },
+				bash: {
+					executionController: runCommandExecutionController,
+					timeoutMs: runCommandsTimeoutMs,
+				},
 			},
 			...preset,
 			enableSkills: !!skillsExecutor,
@@ -578,6 +583,7 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 					toolExecutors,
 					telemetry ?? config.telemetry,
 					input.runCommandExecutionController,
+					input.runCommandsTimeoutMs,
 				),
 			);
 			const agentPluginMcpServers = pluginsEnabled
@@ -678,6 +684,7 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 												toolExecutors,
 												telemetry ?? config.telemetry,
 												input.runCommandExecutionController,
+												input.runCommandsTimeoutMs,
 											),
 											agent,
 										)
@@ -781,6 +788,7 @@ export class DefaultRuntimeBuilder implements RuntimeBuilder {
 									toolExecutors,
 									telemetry ?? config.telemetry,
 									input.runCommandExecutionController,
+									input.runCommandsTimeoutMs,
 								)
 						: undefined,
 					teammateConfigProvider: delegatedAgentConfigProvider,

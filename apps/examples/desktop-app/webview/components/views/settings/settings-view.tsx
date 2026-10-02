@@ -9,6 +9,7 @@ import {
 	DialogHeader,
 	DialogTitle,
 } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Slider } from "@/components/ui/slider";
 import {
 	DEFAULT_APP_FONT_SIZE,
@@ -720,6 +721,15 @@ function GeneralSettingsContent({
 	>(null);
 	// Keep the preview hidden until the rollout service explicitly enables it.
 	const [cloudSessionsAvailable, setCloudSessionsAvailable] = useState(false);
+	const [runCommandsTimeoutSeconds, setRunCommandsTimeoutSeconds] =
+		useState(30);
+	const [runCommandsTimeoutLoading, setRunCommandsTimeoutLoading] =
+		useState(true);
+	const [runCommandsTimeoutSaving, setRunCommandsTimeoutSaving] =
+		useState(false);
+	const [runCommandsTimeoutError, setRunCommandsTimeoutError] = useState<
+		string | null
+	>(null);
 
 	const refreshCloudSessionsEffective = useCallback(async () => {
 		try {
@@ -745,6 +755,8 @@ function GeneralSettingsContent({
 		setAutoUpdateError(null);
 		setCloudSessionsLoading(true);
 		setCloudSessionsError(null);
+		setRunCommandsTimeoutLoading(true);
+		setRunCommandsTimeoutError(null);
 		await Promise.all([
 			(async () => {
 				try {
@@ -767,16 +779,24 @@ function GeneralSettingsContent({
 				try {
 					const desktopSettings = await desktopClient.invoke<{
 						cloudSessionsEnabled: boolean;
+						runCommandsTimeoutSeconds: number;
 					}>("get_desktop_settings");
 					setCloudSessionsEnabled(
 						Boolean(desktopSettings.cloudSessionsEnabled),
+					);
+					setRunCommandsTimeoutSeconds(
+						desktopSettings.runCommandsTimeoutSeconds ?? 30,
 					);
 				} catch (error) {
 					setCloudSessionsError(
 						error instanceof Error ? error.message : String(error),
 					);
+					setRunCommandsTimeoutError(
+						error instanceof Error ? error.message : String(error),
+					);
 				} finally {
 					setCloudSessionsLoading(false);
+					setRunCommandsTimeoutLoading(false);
 				}
 			})(),
 			refreshCloudSessionsEffective(),
@@ -847,6 +867,27 @@ function GeneralSettingsContent({
 			setCloudSessionsError(message);
 		} finally {
 			setCloudSessionsSaving(false);
+		}
+	};
+
+	const updateRunCommandsTimeoutSeconds = async (nextValue: number) => {
+		const previousValue = runCommandsTimeoutSeconds;
+		setRunCommandsTimeoutSeconds(nextValue);
+		setRunCommandsTimeoutSaving(true);
+		setRunCommandsTimeoutError(null);
+		try {
+			const settings = await desktopClient.invoke<{
+				runCommandsTimeoutSeconds: number;
+			}>("set_run_commands_timeout", {
+				run_commands_timeout_seconds: nextValue,
+			});
+			setRunCommandsTimeoutSeconds(settings.runCommandsTimeoutSeconds);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : String(error);
+			setRunCommandsTimeoutSeconds(previousValue);
+			setRunCommandsTimeoutError(message);
+		} finally {
+			setRunCommandsTimeoutSaving(false);
 		}
 	};
 
@@ -1059,6 +1100,52 @@ function GeneralSettingsContent({
 						disabled={autoUpdateLoading || autoUpdateSaving}
 						onCheckedChange={(checked) => void updateAutoUpdateEnabled(checked)}
 					/>
+				</div>
+				<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">
+					<div className="flex flex-col gap-1">
+						<p className="text-base font-semibold text-foreground">
+							Run commands timeout
+						</p>
+						<p className="text-sm text-muted-foreground">
+							Maximum time in seconds the run_commands tool waits for a command
+							to finish before timing out.
+						</p>
+						{runCommandsTimeoutError ? (
+							<p className="mt-2 text-xs text-destructive" role="alert">
+								Failed to update run commands timeout: {runCommandsTimeoutError}
+							</p>
+						) : null}
+					</div>
+					<div className="flex w-40 shrink-0 items-center gap-2">
+						<Input
+							aria-label="Run commands timeout in seconds"
+							className="text-right tabular-nums"
+							disabled={runCommandsTimeoutLoading || runCommandsTimeoutSaving}
+							max={3600}
+							min={1}
+							onBlur={(event) => {
+								const value = Number(event.target.value);
+								if (Number.isFinite(value) && value >= 1) {
+									void updateRunCommandsTimeoutSeconds(value);
+								}
+							}}
+							onChange={(event) => {
+								const value = Number(event.target.value);
+								if (Number.isFinite(value) && value >= 1) {
+									setRunCommandsTimeoutSeconds(value);
+								}
+							}}
+							onKeyDown={(event) => {
+								if (event.key === "Enter") {
+									event.currentTarget.blur();
+								}
+							}}
+							step={1}
+							type="number"
+							value={runCommandsTimeoutSeconds}
+						/>
+						<span className="text-sm text-muted-foreground">seconds</span>
+					</div>
 				</div>
 				{cloudSessionsAvailable ? (
 					<div className="flex py-4 items-center justify-between gap-5 border-b max-[720px]:flex-col max-[720px]:items-stretch max-[720px]:py-4">

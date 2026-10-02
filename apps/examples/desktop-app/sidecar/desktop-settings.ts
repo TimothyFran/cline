@@ -6,14 +6,26 @@ import { resolveClineDataDir } from "@cline/shared/storage";
 export type DesktopSettings = {
 	/** Opt-in gate for cloud sessions while the feature is in preview. */
 	cloudSessionsEnabled: boolean;
+	/** Timeout in seconds applied to the `run_commands` tool. */
+	runCommandsTimeoutSeconds: number;
 };
+
+const DEFAULT_RUN_COMMANDS_TIMEOUT_SECONDS = 30;
 
 const DEFAULT_SETTINGS: DesktopSettings = {
 	cloudSessionsEnabled: false,
+	runCommandsTimeoutSeconds: DEFAULT_RUN_COMMANDS_TIMEOUT_SECONDS,
 };
 
 export function resolveDesktopSettingsPath(): string {
 	return join(resolveClineDataDir(), "settings", "code-settings.json");
+}
+
+function resolveRunCommandsTimeoutSeconds(value: unknown): number {
+	if (typeof value !== "number" || !Number.isFinite(value) || value < 1) {
+		return DEFAULT_RUN_COMMANDS_TIMEOUT_SECONDS;
+	}
+	return Math.floor(value);
 }
 
 export function readDesktopSettings(): DesktopSettings {
@@ -27,6 +39,9 @@ export function readDesktopSettings(): DesktopSettings {
 		const parsed = JSON.parse(raw) as Record<string, unknown>;
 		return {
 			cloudSessionsEnabled: parsed.cloudSessionsEnabled === true,
+			runCommandsTimeoutSeconds: resolveRunCommandsTimeoutSeconds(
+				parsed.runCommandsTimeoutSeconds,
+			),
 		};
 	} catch {
 		return { ...DEFAULT_SETTINGS };
@@ -44,6 +59,15 @@ export function writeDesktopSettings(settings: DesktopSettings): void {
 
 export function setCloudSessionsEnabled(enabled: boolean): DesktopSettings {
 	const next = { ...readDesktopSettings(), cloudSessionsEnabled: enabled };
+	writeDesktopSettings(next);
+	return next;
+}
+
+export function setRunCommandsTimeoutSeconds(seconds: number): DesktopSettings {
+	const next = {
+		...readDesktopSettings(),
+		runCommandsTimeoutSeconds: resolveRunCommandsTimeoutSeconds(seconds),
+	};
 	writeDesktopSettings(next);
 	return next;
 }

@@ -129,6 +129,7 @@ import {
 import {
 	readDesktopSettings,
 	setCloudSessionsEnabled,
+	setRunCommandsTimeoutSeconds,
 } from "./desktop-settings";
 import { writeDiagnosticsReport } from "./diagnostics";
 import {
@@ -3242,6 +3243,16 @@ export async function handleCommand(
 			cloudAgentsAvailable: isCloudAgentsAvailable(),
 		});
 		return settings;
+	}
+	if (command === "set_run_commands_timeout") {
+		const seconds =
+			typeof args?.run_commands_timeout_seconds === "number"
+				? args.run_commands_timeout_seconds
+				: Number(args?.run_commands_timeout_seconds);
+		if (!Number.isFinite(seconds) || seconds < 1) {
+			throw new Error("run_commands_timeout_seconds must be a positive number");
+		}
+		return setRunCommandsTimeoutSeconds(seconds);
 	}
 
 	// ── Connector channels ─────────────────────────────────────────────

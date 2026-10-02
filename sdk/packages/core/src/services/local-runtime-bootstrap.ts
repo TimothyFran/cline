@@ -574,6 +574,7 @@ export async function prepareLocalRuntimeBootstrap(
 	);
 	const requestToolApproval = capabilities?.requestToolApproval;
 	const effectiveToolExecutors = capabilities?.toolExecutors;
+	const effectiveRunCommandsTimeoutMs = capabilities?.runCommandsTimeoutMs;
 	const subAgentLifecycleCallbacks = createSubAgentLifecycleCallbacks?.(config);
 	const workspaceManager = new InMemoryWorkspaceManager({
 		currentWorkspacePath: workspaceInfo.rootPath,
@@ -610,6 +611,7 @@ export async function prepareLocalRuntimeBootstrap(
 			agentPluginMcpServers: loadedAgentPluginPackages?.mcpServers,
 			configExtensions: configExtensions,
 			toolExecutors: effectiveToolExecutors,
+			runCommandsTimeoutMs: effectiveRunCommandsTimeoutMs,
 			toolPolicies,
 			workspaceManager,
 			logger: config.logger,

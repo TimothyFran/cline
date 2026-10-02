@@ -194,7 +194,10 @@ describe("desktop settings commands", () => {
 			handleCommand(ctx, "set_cloud_sessions_enabled", {
 				cloud_sessions_enabled: enabled,
 			}),
-		).resolves.toEqual({ cloudSessionsEnabled: enabled });
+		).resolves.toEqual({
+			cloudSessionsEnabled: enabled,
+			runCommandsTimeoutSeconds: 30,
+		});
 		expect(events).toEqual([
 			{ name: "cloud_sessions_changed", payload: { environmentId: "local" } },
 			{
@@ -211,6 +214,41 @@ describe("desktop settings commands", () => {
 		).resolves.toMatchObject({ cloudAgents: false });
 		await expect(
 			handleCommand(ctx, "get_desktop_settings", {}),
-		).resolves.toEqual({ cloudSessionsEnabled: enabled });
+		).resolves.toEqual({
+			cloudSessionsEnabled: enabled,
+			runCommandsTimeoutSeconds: 30,
+		});
+	});
+
+	it("persists the run commands timeout and rejects invalid values", async () => {
+		const { ctx } = createContext();
+
+		await expect(
+			handleCommand(ctx, "set_run_commands_timeout", {
+				run_commands_timeout_seconds: 120,
+			}),
+		).resolves.toEqual({
+			cloudSessionsEnabled: false,
+			runCommandsTimeoutSeconds: 120,
+		});
+
+		await expect(
+			handleCommand(ctx, "get_desktop_settings", {}),
+		).resolves.toEqual({
+			cloudSessionsEnabled: false,
+			runCommandsTimeoutSeconds: 120,
+		});
+
+		await expect(
+			handleCommand(ctx, "set_run_commands_timeout", {
+				run_commands_timeout_seconds: 0,
+			}),
+		).rejects.toThrow("run_commands_timeout_seconds must be a positive number");
+
+		await expect(
+			handleCommand(ctx, "set_run_commands_timeout", {
+				run_commands_timeout_seconds: "fast",
+			}),
+		).rejects.toThrow("run_commands_timeout_seconds must be a positive number");
 	});
 });
